@@ -1,0 +1,31 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "FamilyWall-Login",
+        "description": "Mit deinem FamilyWall-Konto anmelden (inoffizielle API).",
+        "data": {
+          "email": "E-Mail",
+          "password": "Passwort"
+        }
+      },
+      "lists": {
+        "title": "Listen auswählen",
+        "description": "Welche FamilyWall-Listen sollen in Home Assistant als To-do-Liste erscheinen?",
+        "data": {
+          "lists": "Listen"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "E-Mail oder Passwort falsch",
+      "cannot_connect": "Keine Verbindung zu FamilyWall",
+      "unknown": "Unerwarteter Fehler",
+      "no_selection": "Mindestens eine Liste auswählen"
+    },
+    "abort": {
+      "already_configured": "Dieses FamilyWall-Konto ist bereits eingerichtet",
+      "no_lists": "Keine Listen in diesem FamilyWall-Konto gefunden"
+    }
+  }
+}
