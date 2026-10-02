@@ -39,6 +39,7 @@ class FamilyWallCoordinator(DataUpdateCoordinator[dict[str, FamilyWallList]]):
             lists = {fw.id: fw for fw in await self.client.get_lists() if fw.id in selected}
             for fw in lists.values():
                 fw.items = await self.client.get_items(fw.id)
+                fw.categories = await self.client.get_categories(fw)
         except FamilyWallError as err:
             raise UpdateFailed(str(err)) from err
         return lists

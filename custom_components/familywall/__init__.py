@@ -12,7 +12,7 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from .api import FamilyWallAuthError, FamilyWallClient, FamilyWallError
 from .coordinator import FamilyWallConfigEntry, FamilyWallCoordinator
 
-PLATFORMS = [Platform.TODO]
+PLATFORMS = [Platform.BUTTON, Platform.TODO]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: FamilyWallConfigEntry) -> bool:

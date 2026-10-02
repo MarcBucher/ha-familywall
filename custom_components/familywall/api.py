@@ -48,6 +48,20 @@ class FamilyWallItem:
     quantity: str | None = None
     # ISO timestamp of the last change (e.g. when it was checked off); sortable as string.
     modified: str = ""
+    category_id: str | None = None
+    # Position set by drag & drop in the app; higher = further up (new items get the
+    # highest value, so they appear on top).
+    sort_index: int = 0
+
+
+@dataclass
+class FamilyWallCategory:
+    """An item category (e.g. "Obst & Gemüse") as configured for one list."""
+
+    id: str
+    name: str
+    emoji: str = ""
+    sort_index: int = 0
 
 
 @dataclass
@@ -57,7 +71,10 @@ class FamilyWallList:
     id: str
     name: str
     type: str | None = None
+    raw_type: str | None = None
     items: list[FamilyWallItem] = field(default_factory=list)
+    # Categories in app order (only those not hidden for this list).
+    categories: list[FamilyWallCategory] = field(default_factory=list)
 
 
 def _get_str(value: dict[str, Any], keys: list[str]) -> str | None:
@@ -68,6 +85,13 @@ def _get_str(value: dict[str, Any], keys: list[str]) -> str | None:
         if isinstance(candidate, (int, float)) and not isinstance(candidate, bool):
             return str(candidate)
     return None
+
+
+def _get_int(value: dict[str, Any], key: str, default: int = 0) -> int:
+    try:
+        return int(value.get(key))
+    except (TypeError, ValueError):
+        return default
 
 
 def _get_bool(value: Any) -> bool:
@@ -123,6 +147,8 @@ def _parse_item(value: dict[str, Any]) -> FamilyWallItem | None:
         completed=_get_bool(completion),
         quantity=str(quantity) if isinstance(quantity, (str, int, float)) and quantity != "" else None,
         modified=_get_str(value, ["modifDate", "lastActionDate", "creationDate"]) or "",
+        category_id=_get_str(value, ["taskCategoryId"]) or None,
+        sort_index=_get_int(value, "sortingIndex"),
     )
 
 
@@ -231,9 +257,8 @@ class FamilyWallClient:
             list_id = _get_str(entry, ["metaId", "taskListId", "listId", "id"])
             name = _get_str(entry, ["name", "title"])
             if list_id and name is not None:
-                lists.append(
-                    FamilyWallList(list_id, name, _list_type(_get_str(entry, ["type", "taskListType"])))
-                )
+                raw_type = _get_str(entry, ["type", "taskListType"])
+                lists.append(FamilyWallList(list_id, name, _list_type(raw_type), raw_type))
         return lists
 
     async def get_items(self, list_id: str) -> list[FamilyWallItem]:
@@ -257,17 +282,59 @@ class FamilyWallClient:
                 items.append(item)
         return items
 
+    async def get_categories(self, fw_list: FamilyWallList) -> list[FamilyWallCategory]:
+        """Return the categories of a list in app order."""
+        if not fw_list.raw_type:
+            return []
+        result = await self._call(
+            "taskcategorylist",
+            {
+                "partnerScope": "Family",
+                "a00tasklistType": fw_list.raw_type,
+                "a00locale": "de",
+                "a00filterTasklistId": fw_list.id,
+            },
+        )
+        categories = []
+        for value in result if isinstance(result, list) else []:
+            if not isinstance(value, dict) or fw_list.id in (value.get("hiddenByTaskList") or []):
+                continue
+            cat_id = _get_str(value, ["metaId", "id"])
+            name = _get_str(value, ["name"])
+            if not cat_id or name is None:
+                continue
+            per_list = value.get("sortingIndexByTaskList") or {}
+            try:
+                sort_index = int(per_list.get(fw_list.id, value.get("initialSortingIndex", 0)))
+            except (TypeError, ValueError):
+                sort_index = 0
+            categories.append(
+                FamilyWallCategory(cat_id, name, _get_str(value, ["emoji"]) or "", sort_index)
+            )
+        return sorted(categories, key=lambda c: c.sort_index)
+
     # Write calls follow the official web app (startupmodule.js): `taskcreate` has no
     # list parameter and always files into the default to-do list, so items are
     # created and edited via `taskcreate2` / `taskupdate2`, which take the task's
     # fields inline (a00taskListId, a00text, ...).
 
-    async def add_item(self, list_id: str, text: str) -> None:
-        """Add an item to a list."""
-        await self._call(
-            "taskcreate2",
-            {"partnerScope": "Family", "a00taskListId": list_id, "a00text": text},
-        )
+    async def add_item(self, list_id: str, text: str, category_id: str | None = None) -> None:
+        """Add an item to a list (on top, optionally in a category)."""
+        body = {"partnerScope": "Family", "a00taskListId": list_id, "a00text": text}
+        if category_id:
+            body["a00taskCategoryId"] = category_id
+        await self._call("taskcreate2", body)
+
+    async def move_item(
+        self, list_id: str, item_id: str, prev_item_id: str | None, category_id: str | None
+    ) -> None:
+        """Place an item directly below ``prev_item_id`` (or on top if None)."""
+        body = {"partnerScope": "Family", "a00taskId": item_id, "a00taskListId": list_id}
+        if prev_item_id:
+            body["a00prevTaskId"] = prev_item_id
+        if category_id:
+            body["a00taskCategoryId"] = category_id
+        await self._call("taskmove", body)
 
     async def rename_item(self, list_id: str, item_id: str, text: str) -> None:
         """Change an item's text."""
