@@ -30,7 +30,11 @@ async def async_setup_entry(
 
 
 class FamilyWallTodoList(CoordinatorEntity[FamilyWallCoordinator], TodoListEntity):
-    """A FamilyWall list."""
+    """A FamilyWall list.
+
+    Writes refresh immediately (not debounced) so that a follow-up call, e.g. an
+    automation renaming and then removing an item, sees the new state.
+    """
 
     _attr_has_entity_name = True
     _attr_supported_features = (
@@ -92,7 +96,7 @@ class FamilyWallTodoList(CoordinatorEntity[FamilyWallCoordinator], TodoListEntit
             await self.coordinator.client.add_item(self._list_id, item.summary.strip())
         except FamilyWallError as err:
             raise HomeAssistantError(f"FamilyWall: {err}") from err
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_refresh()
 
     async def async_update_todo_item(self, item: TodoItem) -> None:
         current = self._find(item.uid)
@@ -106,7 +110,7 @@ class FamilyWallTodoList(CoordinatorEntity[FamilyWallCoordinator], TodoListEntit
                 await client.set_completed(current.uid, item.status == TodoItemStatus.COMPLETED)
         except FamilyWallError as err:
             raise HomeAssistantError(f"FamilyWall: {err}") from err
-        await self.coordinator.async_request_refresh()
+        await self.coordinator.async_refresh()
 
     async def async_delete_todo_items(self, uids: list[str]) -> None:
         try:
@@ -115,4 +119,4 @@ class FamilyWallTodoList(CoordinatorEntity[FamilyWallCoordinator], TodoListEntit
         except FamilyWallError as err:
             raise HomeAssistantError(f"FamilyWall: {err}") from err
         finally:
-            await self.coordinator.async_request_refresh()
+            await self.coordinator.async_refresh()
