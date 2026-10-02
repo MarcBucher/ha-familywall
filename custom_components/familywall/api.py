@@ -46,6 +46,8 @@ class FamilyWallItem:
     text: str
     completed: bool
     quantity: str | None = None
+    # ISO timestamp of the last change (e.g. when it was checked off); sortable as string.
+    modified: str = ""
 
 
 @dataclass
@@ -120,6 +122,7 @@ def _parse_item(value: dict[str, Any]) -> FamilyWallItem | None:
         text=text,
         completed=_get_bool(completion),
         quantity=str(quantity) if isinstance(quantity, (str, int, float)) and quantity != "" else None,
+        modified=_get_str(value, ["modifDate", "lastActionDate", "creationDate"]) or "",
     )
 
 

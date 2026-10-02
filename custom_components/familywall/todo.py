@@ -15,7 +15,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import FamilyWallError
-from .const import DOMAIN
+from .const import DOMAIN, MAX_COMPLETED_ITEMS
 from .coordinator import FamilyWallConfigEntry, FamilyWallCoordinator
 
 
@@ -66,6 +66,12 @@ class FamilyWallTodoList(CoordinatorEntity[FamilyWallCoordinator], TodoListEntit
         if fw is None:
             return
         self._attr_name = fw.name
+        open_items = [item for item in fw.items if not item.completed]
+        completed = sorted(
+            (item for item in fw.items if item.completed),
+            key=lambda item: item.modified,
+            reverse=True,
+        )[:MAX_COMPLETED_ITEMS]
         self._attr_todo_items = [
             TodoItem(
                 uid=item.id,
@@ -73,7 +79,7 @@ class FamilyWallTodoList(CoordinatorEntity[FamilyWallCoordinator], TodoListEntit
                 status=TodoItemStatus.COMPLETED if item.completed else TodoItemStatus.NEEDS_ACTION,
                 description=f"Menge: {item.quantity}" if item.quantity else None,
             )
-            for item in fw.items
+            for item in (*open_items, *completed)
         ]
 
     def _find(self, uid: str | None) -> TodoItem | None:
