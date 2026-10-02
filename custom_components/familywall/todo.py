@@ -30,14 +30,13 @@ async def async_setup_entry(
 
 
 class FamilyWallTodoList(CoordinatorEntity[FamilyWallCoordinator], TodoListEntity):
-    """A FamilyWall list.
-
-    The API cannot delete or rename items, so only create and (un)check are offered.
-    """
+    """A FamilyWall list."""
 
     _attr_has_entity_name = True
     _attr_supported_features = (
-        TodoListEntityFeature.CREATE_TODO_ITEM | TodoListEntityFeature.UPDATE_TODO_ITEM
+        TodoListEntityFeature.CREATE_TODO_ITEM
+        | TodoListEntityFeature.UPDATE_TODO_ITEM
+        | TodoListEntityFeature.DELETE_TODO_ITEM
     )
 
     def __init__(self, coordinator: FamilyWallCoordinator, list_id: str) -> None:
@@ -93,15 +92,21 @@ class FamilyWallTodoList(CoordinatorEntity[FamilyWallCoordinator], TodoListEntit
         current = self._find(item.uid)
         if current is None:
             raise HomeAssistantError("Eintrag nicht gefunden")
-        if item.summary is not None and item.summary != current.summary:
-            raise HomeAssistantError(
-                "FamilyWall erlaubt kein Umbenennen über Home Assistant – bitte in der App ändern"
-            )
-        if item.status is not None and item.status != current.status:
-            try:
-                await self.coordinator.client.set_completed(
-                    item.uid, item.status == TodoItemStatus.COMPLETED
-                )
-            except FamilyWallError as err:
-                raise HomeAssistantError(f"FamilyWall: {err}") from err
+        client = self.coordinator.client
+        try:
+            if item.summary and item.summary.strip() and item.summary != current.summary:
+                await client.rename_item(self._list_id, current.uid, item.summary.strip())
+            if item.status is not None and item.status != current.status:
+                await client.set_completed(current.uid, item.status == TodoItemStatus.COMPLETED)
+        except FamilyWallError as err:
+            raise HomeAssistantError(f"FamilyWall: {err}") from err
+        await self.coordinator.async_request_refresh()
+
+    async def async_delete_todo_items(self, uids: list[str]) -> None:
+        try:
+            for uid in uids:
+                await self.coordinator.client.delete_item(uid)
+        except FamilyWallError as err:
+            raise HomeAssistantError(f"FamilyWall: {err}") from err
+        finally:
             await self.coordinator.async_request_refresh()

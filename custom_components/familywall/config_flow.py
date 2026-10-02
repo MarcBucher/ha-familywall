@@ -10,7 +10,6 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.selector import (
     SelectOptionDict,
     SelectSelector,
@@ -51,20 +50,21 @@ class FamilyWallConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             await self.async_set_unique_id(user_input[CONF_EMAIL].strip().lower())
             self._abort_if_unique_id_configured()
-            session = async_create_clientsession(self.hass)
-            client = FamilyWallClient(session, user_input[CONF_EMAIL].strip(), user_input[CONF_PASSWORD])
-            try:
-                await client.login()
-                self._lists = await client.get_lists()
-            except FamilyWallAuthError:
-                errors["base"] = "invalid_auth"
-            except (FamilyWallError, aiohttp.ClientError):
-                errors["base"] = "cannot_connect"
-            except Exception:
-                _LOGGER.exception("Unexpected error during FamilyWall login")
-                errors["base"] = "unknown"
-            finally:
-                await session.close()
+            # Short-lived session with its own cookie jar, only for validating the login.
+            async with aiohttp.ClientSession() as session:
+                client = FamilyWallClient(
+                    session, user_input[CONF_EMAIL].strip(), user_input[CONF_PASSWORD]
+                )
+                try:
+                    await client.login()
+                    self._lists = await client.get_lists()
+                except FamilyWallAuthError:
+                    errors["base"] = "invalid_auth"
+                except (FamilyWallError, aiohttp.ClientError):
+                    errors["base"] = "cannot_connect"
+                except Exception:
+                    _LOGGER.exception("Unexpected error during FamilyWall login")
+                    errors["base"] = "unknown"
             if not errors:
                 if not self._lists:
                     return self.async_abort(reason="no_lists")

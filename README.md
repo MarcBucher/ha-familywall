@@ -3,12 +3,12 @@
 Unofficial custom integration that exposes [FamilyWall](https://www.familywall.com) lists
 (shopping, to-do, other) as Home Assistant **to-do entities**.
 
-- Add items and check/uncheck them from Home Assistant (both directions).
+- Add, check/uncheck, rename and delete items from Home Assistant.
 - Changes made in the FamilyWall app show up within 60 seconds (cloud polling).
-- Deleting or renaming items is not supported by the API – do that in the FamilyWall app.
 
-> ⚠️ Uses FamilyWall's private web API (protocol ported from
-> [ryanhunt/familywall-api](https://github.com/ryanhunt/familywall-api)). It may break when
+> ⚠️ Uses FamilyWall's private web API (login/read protocol ported from
+> [ryanhunt/familywall-api](https://github.com/ryanhunt/familywall-api); write calls
+> `taskcreate2` / `taskupdate2` / `taskmark` / `taskdelete` as used by the official web app). It may break when
 > FamilyWall changes their backend. Your FamilyWall email/password are stored in the Home
 > Assistant config entry.
 

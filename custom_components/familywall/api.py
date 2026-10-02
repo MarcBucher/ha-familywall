@@ -254,11 +254,29 @@ class FamilyWallClient:
                 items.append(item)
         return items
 
+    # Write calls follow the official web app (startupmodule.js): `taskcreate` has no
+    # list parameter and always files into the default to-do list, so items are
+    # created and edited via `taskcreate2` / `taskupdate2`, which take the task's
+    # fields inline (a00taskListId, a00text, ...).
+
     async def add_item(self, list_id: str, text: str) -> None:
         """Add an item to a list."""
         await self._call(
-            "taskcreate",
+            "taskcreate2",
             {"partnerScope": "Family", "a00taskListId": list_id, "a00text": text},
+        )
+
+    async def rename_item(self, list_id: str, item_id: str, text: str) -> None:
+        """Change an item's text."""
+        await self._call(
+            "taskupdate2",
+            {
+                "partnerScope": "Family",
+                "a00taskId": item_id,
+                "a00metaId": item_id,
+                "a00taskListId": list_id,
+                "a00text": text,
+            },
         )
 
     async def set_completed(self, item_id: str, completed: bool) -> None:
@@ -267,3 +285,7 @@ class FamilyWallClient:
             "taskmark",
             {"partnerScope": "Family", "a00taskId": item_id, "a00complete": completed},
         )
+
+    async def delete_item(self, item_id: str) -> None:
+        """Delete an item."""
+        await self._call("taskdelete", {"partnerScope": "Family", "a00taskId": item_id})
