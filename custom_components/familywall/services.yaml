@@ -1,0 +1,32 @@
+add_item:
+  target:
+    entity:
+      integration: familywall
+      domain: todo
+  fields:
+    item:
+      required: true
+      example: "Brot"
+      selector:
+        text:
+    category_id:
+      example: "taskCategory/123_202 (leer = ohne Kategorie)"
+      selector:
+        text:
+
+move_item:
+  target:
+    entity:
+      integration: familywall
+      domain: todo
+  fields:
+    uid:
+      required: true
+      selector:
+        text:
+    previous_uid:
+      selector:
+        text:
+    category_id:
+      selector:
+        text:

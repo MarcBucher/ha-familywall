@@ -23,14 +23,28 @@ Unofficial custom integration that exposes [FamilyWall](https://www.familywall.c
 3. Settings → Devices & services → **Add integration** → *FamilyWall*.
 4. Log in and pick the lists to expose (shopping lists are preselected).
 
-## Entities
+## Dashboard card
 
-- `todo.familywall_<list>`: the whole list.
-- For lists with categories, additionally one entity per category, e.g.
-  `todo.familywall_einkaufen_obst_gemuse`, plus `todo.familywall_<list>_ohne_kategorie`.
-  The HA to-do card cannot group, so a dashboard can show one card per category. Items
-  added in a category entity get that category.
+The integration ships its own card (no extra install), one compact card per list with
+category headings like the app, a single input field with an optional category picker,
+tap-to-edit (rename, change category, delete), drag & drop (mouse and touch) and a
+collapsible "Erledigt" section:
+
+```yaml
+type: custom:familywall-list-card
+entity: todo.familywall_einkaufen
+title: Einkaufen        # optional
+icon: mdi:cart          # optional
+show_completed: false   # optional
+```
+
+## Entities and services
+
+- `todo.familywall_<list>`: one per selected list, in app order. Attributes
+  `categories` and `item_categories` carry the category data for the card.
 - `button.familywall_jetzt_aktualisieren`: reload all lists now.
+- `familywall.add_item` (`item`, optional `category_id`) and `familywall.move_item`
+  (`uid`, optional `previous_uid`, optional `category_id`, `""` = no category).
 
 Item quantities appear in the item description. Categories added later in the app appear
-after reloading the integration.
+after the next refresh.

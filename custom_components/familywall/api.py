@@ -328,11 +328,14 @@ class FamilyWallClient:
     async def move_item(
         self, list_id: str, item_id: str, prev_item_id: str | None, category_id: str | None
     ) -> None:
-        """Place an item directly below ``prev_item_id`` (or on top if None)."""
+        """Place an item directly below ``prev_item_id`` (or on top if None).
+
+        ``category_id``: None keeps the item's category, "" removes it.
+        """
         body = {"partnerScope": "Family", "a00taskId": item_id, "a00taskListId": list_id}
         if prev_item_id:
             body["a00prevTaskId"] = prev_item_id
-        if category_id:
+        if category_id is not None:
             body["a00taskCategoryId"] = category_id
         await self._call("taskmove", body)
 

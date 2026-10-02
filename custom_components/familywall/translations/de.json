@@ -27,5 +27,39 @@
       "already_configured": "Dieses FamilyWall-Konto ist bereits eingerichtet",
       "no_lists": "Keine Listen in diesem FamilyWall-Konto gefunden"
     }
+  },
+  "services": {
+    "add_item": {
+      "name": "Eintrag hinzufügen",
+      "description": "Fügt einer FamilyWall-Liste einen Eintrag hinzu, optional in einer Kategorie.",
+      "fields": {
+        "item": {
+          "name": "Eintrag",
+          "description": "Text des neuen Eintrags."
+        },
+        "category_id": {
+          "name": "Kategorie",
+          "description": "Kategorie-ID (siehe Attribut categories der Entität); leer = ohne Kategorie."
+        }
+      }
+    },
+    "move_item": {
+      "name": "Eintrag verschieben",
+      "description": "Verschiebt einen Eintrag unter einen anderen und/oder in eine Kategorie.",
+      "fields": {
+        "uid": {
+          "name": "Eintrag",
+          "description": "uid des zu verschiebenden Eintrags."
+        },
+        "previous_uid": {
+          "name": "Unter Eintrag",
+          "description": "uid des Eintrags, unter den er soll; leer = zuoberst."
+        },
+        "category_id": {
+          "name": "Kategorie",
+          "description": "Ziel-Kategorie-ID; leerer Text = ohne Kategorie, weglassen = beibehalten."
+        }
+      }
+    }
   }
 }

@@ -27,5 +27,39 @@
       "already_configured": "This FamilyWall account is already configured",
       "no_lists": "No lists found in this FamilyWall account"
     }
+  },
+  "services": {
+    "add_item": {
+      "name": "Add item",
+      "description": "Add an item to a FamilyWall list, optionally in a category.",
+      "fields": {
+        "item": {
+          "name": "Item",
+          "description": "Text of the new item."
+        },
+        "category_id": {
+          "name": "Category",
+          "description": "Category id (see the entity attribute categories); empty = no category."
+        }
+      }
+    },
+    "move_item": {
+      "name": "Move item",
+      "description": "Move an item below another one and/or into a category.",
+      "fields": {
+        "uid": {
+          "name": "Item",
+          "description": "uid of the item to move."
+        },
+        "previous_uid": {
+          "name": "Below item",
+          "description": "uid of the item it should be placed below; empty = on top."
+        },
+        "category_id": {
+          "name": "Category",
+          "description": "Target category id; empty string = no category, omitted = keep."
+        }
+      }
+    }
   }
 }

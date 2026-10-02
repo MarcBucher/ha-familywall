@@ -5,10 +5,14 @@
     "@MarcBucher"
   ],
   "config_flow": true,
+  "dependencies": [
+    "frontend",
+    "http"
+  ],
   "documentation": "https://github.com/MarcBucher/ha-familywall",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/MarcBucher/ha-familywall/issues",
   "requirements": [],
-  "version": "0.3.0"
+  "version": "0.4.0"
 }
